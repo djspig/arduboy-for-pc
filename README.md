@@ -7,3 +7,6 @@ SDL is used as the back-end, so we should be able to cross compile for Win, Mac,
 
 Requires SDL 1.2 development libraries.
 Only tested with Windows and MinGW so far.
+
+
+![screenshot](https://raw.githubusercontent.com/stg/arduboy-for-pc/master/shots/stateoftheart.jpg "screenshot")
