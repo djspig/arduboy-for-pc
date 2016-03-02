@@ -3,7 +3,9 @@
 #define __SDLSTUFF_H__
 
 #include <SDL/SDL.h>
+#ifdef __WIN32__
 #include <Windows.h>
+#endif
 #include <stdbool.h>
 #include <math.h>
 
@@ -138,7 +140,7 @@ int main(int argc, char* argv[]) {
 
 
 // ** HELPER STUFF BELOW ********************************************
-
+#ifdef __WIN32__
 PCHAR* CommandLineToArgvA( PCHAR CmdLine, int* _argc ) {
   PCHAR *argv;
   PCHAR _argv;
@@ -234,6 +236,9 @@ int CALLBACK WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
   free( argv );
   return( ret );
 }
+
+#endif
+
 
 // Draws an alpha-blended pixel, used by draw_line
 static void draw_pixel( short x, short y, Uint8 a ) {
