@@ -1,0 +1,3 @@
+@echo Compiling binary to bin/sketch...
+@gcc emulate/main.c -Wall -O2 -g -std=c99 -lsdl -Iemulate -obin/sketch.exe
+@strip bin/sketch.exe
