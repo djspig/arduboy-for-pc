@@ -107,7 +107,7 @@ int main(int argc, char* argv[]) {
   if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) return 1;
 
   //
-  SDL_WM_SetCaption("Let's play Arduboy!", "");
+  SDL_WM_SetCaption(GAMENAME, "");
   
   if (!(screen = SDL_SetVideoMode(rect.w, rect.h, 32, SDL_SWSURFACE))) {
     SDL_Quit();

@@ -22,7 +22,7 @@ del ~files~.tmp
 set FileList=!FileList:~1!
 
 rem Compile all the files
-gcc !FileList! -DSKETCH=\"../sketches/%1/%1.ino\" -fpermissive -std=gnu++11 -O2 -g -lsdl -Iemulate -obin/%1.exe
+gcc !FileList! -DGAMENAME=\"%1\" -DSKETCH=\"../sketches/%1/%1.ino\" -fpermissive -std=gnu++11 -O2 -g -lsdl -Iemulate -obin/%1.exe
 
 rem Check for error
 if errorlevel 1 goto CompilationFailed
