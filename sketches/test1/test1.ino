@@ -13,7 +13,7 @@ void drawBackground(unsigned posX, unsigned posY) {
         x - subX, y - subY,
         tilesheet_bitmap, 8, 8,
         pgm_read_byte(&tilemaps[(ackX >> 4) + msiY][(ackX & 0x0F) + lsiY]),
-        WHITE
+        1
       );
     }
   }
