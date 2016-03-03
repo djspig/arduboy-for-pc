@@ -38,11 +38,9 @@ static void draw_line( double x0, double y0, double x1, double y1 );
 static void draw_pixel( short x, short y, Uint8 a );
 
 SDL_Surface *screen;
-SDL_Rect rect = {0, 0, 1024, 512};
+SDL_Rect rect = {0, 0, 640, 480};
 
-
-
-#define ARDUBOY_ENHANCE 2
+#define ARDUBOY_ENHANCE 2  // ENHANCE!!!
 
 // Draws an alpha-blended pixel, used by draw_line
 static void arduboy_pixel( short x, short y, bool white ) {
@@ -94,6 +92,9 @@ int main(int argc, char* argv[]) {
 
   if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) return 1;
 
+  //
+  SDL_WM_SetCaption("Let's play Arduboy!", "");
+  
   if (!(screen = SDL_SetVideoMode(rect.w, rect.h, 32, SDL_SWSURFACE))) {
     SDL_Quit();
     return 1;

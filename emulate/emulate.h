@@ -4,7 +4,8 @@
 /* EMULATION SHEITE */
 #define PROGMEM
 #define WHITE 0
-typedef unsigned char byte;
+typedef uint8_t byte;
+typedef uint16_t word;
 
 void drawSprite(int x, int y, const byte *sheet, byte w, byte h, byte index, byte color) {
   short base = (unsigned)index * ((w * h) >> 3);
