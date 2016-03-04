@@ -10,7 +10,7 @@ echo Compiling sketch %1 to bin\%1.exe...
 
 rem Generate list of files to compile
 set FileList=
-dir emulate\*.c emulate\*.cpp sketches\%1\*.c sketches\%1\*.cpp /ON /B /S 2>nul > ~files~.tmp
+dir emulate\*.c libraries\*.cpp libraries\*.c emulate\*.cpp sketches\%1\*.c sketches\%1\*.cpp /ON /B /S 2>nul > ~files~.tmp
 for /F "usebackq delims=" %%I in (`type ~files~.tmp`) do (
    set RelativePath=%%~I
    set RelativePath=!RelativePath:%cd%=!
@@ -22,7 +22,7 @@ del ~files~.tmp
 set FileList=!FileList:~1!
 
 rem Compile all the files
-gcc !FileList! -DGAMENAME=\"%1\" -DSKETCH=\"../sketches/%1/%1.ino\" -fpermissive -std=gnu++11 -O2 -g -lsdl -Iemulate -obin/%1.exe
+gcc !FileList! -DGAMENAME=\"%1\" -DSKETCH=\"../sketches/%1/%1.ino\" -Ilibraries -fpermissive -std=gnu++11 -O2 -g -lsdl -Iemulate -obin/%1.exe
 
 rem Check for error
 if errorlevel 1 goto CompilationFailed

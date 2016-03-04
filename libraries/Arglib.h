@@ -1,4 +1,6 @@
 #include <emulate.h>
+#include <EEPROM.h>
+#include <SPI.h>
 #ifndef Arduboy_h
 #define Arduboy_h
 

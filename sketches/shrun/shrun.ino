@@ -19,8 +19,8 @@
 //determine the game
 #define GAME_ID 15
 
-//#include <SPI.h>
-//#include <EEPROM.h>
+#include <SPI.h>
+#include <EEPROM.h>
 #include "Arglib.h"
 #include "otherbitmaps.h"
 #include "candlebitmaps.h"

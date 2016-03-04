@@ -59,25 +59,5 @@ static inline byte pgm_read_byte(const byte *wat) {
   return *wat;
 }
 
-static class {
-  public:
-    byte read(uint16_t address) {
-      byte value;
-      FILE *f = fopen("eeprom.bin", "rb");
-      if(!f) return 0xFF;
-      fseek(f, address, SEEK_SET);
-      fread(&value, 1, 1, f);
-      fclose(f);
-      return value;
-    }
-    void write(uint16_t address, byte value) {
-      FILE *f = fopen("eeprom.bin", "wb");
-      if(!f) return;
-      fseek(f, address, SEEK_SET);
-      fwrite(&value, 1, 1, f);
-      fclose(f);
-    }
-} EEPROM;
-
 /* END OF SAID SHEITE */
 #endif//__ARDUBOY_EMULATE_H__
