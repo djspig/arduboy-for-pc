@@ -17,7 +17,7 @@ const int32_t fppi75 = 603;
 void setup() {
 }
 
-// Sample texture
+// Wrapping texture sampler
 byte readtex(unsigned x, unsigned y) {
   // 7's are texture width - 1, height - 1, sizes must be power of two
   x &= (TEX_W-1); y &= (TEX_H-1);
@@ -49,10 +49,10 @@ void loop() {
       // can be further optimized
       int tex_x = ((fp_atn2(ys, xs) + ix) * TEX_W * SCALE_X) / 1602;
       // sqrt needs to be optimized, possibly also division if possible
-      int tex_y = (int)((SCALE_Y / sqrt(xs * xs + ys * ys))) + ix;
+      int tex_y = ((int)((SCALE_Y / sqrt(xs * xs + ys * ys))) + ix) >> 2;
       // transfer pixel from texture
-      byte pixel = readtex(tex_x, tex_y >> 2);
-      arduboy.drawPixel(x, y, pixel);
+      //arduboy.drawPixel(x, y, readtex(tex_x, tex_y)); // TEXTURE
+      arduboy.drawPixel(x, y, 1&(tex_x^(tex_y)));     // CHECKERPATTERN
     }
   }
   arduboy.display();
