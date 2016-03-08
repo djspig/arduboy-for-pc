@@ -11,8 +11,8 @@ Arduboy arduboy;
 #define SCALE_X 2
 #define SCALE_Y 800
 
-const int32_t fppi25 = 201;
-const int32_t fppi75 = 603;
+const int16_t fppi25 = 201;
+const int16_t fppi75 = 603;
 
 void setup() {
 }
@@ -25,11 +25,22 @@ byte readtex(unsigned x, unsigned y) {
 }
 
 // Fast fixed point atn2 approximation, returns 0-1602 (0 and 2PI in Q8 format)
-int32_t fp_atn2(int32_t y, int32_t x) {
-   int32_t abs_y = abs(y);
-   int32_t r = x >= 0 ? ((x - abs_y) << 8) / (x + abs_y) : ((x + abs_y) << 8) / (abs_y - x);
-   int32_t a = x >= 0 ? fppi25 - ((fppi25 * r) >> 8) : fppi75 - ((fppi25 * r) >> 8);
+int16_t fp_atn2(int16_t y, int16_t x) {
+   int16_t abs_y = abs(y);
+   int16_t r = x >= 0 ? ((x - abs_y) << 8) / (x + abs_y) : ((x + abs_y) << 8) / (abs_y - x);
+   int16_t a = x >= 0 ? fppi25 - ((fppi25 * r) >> 8) : fppi75 - ((fppi25 * r) >> 8);
    return (y < 0 ? -a : a) + 798;
+}
+
+uint16_t fp_sqrt(uint16_t val) {
+  uint16_t root, temp;
+  temp = 32;              // max result / 2 
+  root = 0;
+  while(temp) {
+    if(((uint16_t)(root + temp) * (root + temp)) <= val) root += temp;
+    temp = temp >> 1;
+  }
+  return root; 
 }
 
 // Indexer for motion
@@ -48,7 +59,7 @@ void loop() {
       if(xs == 0 && ys == 0) continue;
 
       // sqrt needs to be optimized, possibly also division if possible
-      int dst = SCALE_Y / (int)sqrt(xs * xs + ys * ys);
+      int dst = SCALE_Y / fp_sqrt(xs * xs + ys * ys);
       if(dst > 60) continue; // No point in rendering the aliased centre
       if(dst > 25 && (1&(xs^ys))) continue; // Shadow far region
       int tex_y = (dst + ix) >> 2;
