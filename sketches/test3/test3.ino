@@ -42,20 +42,24 @@ uint8_t i_sqrt(uint16_t val) {
   return root; 
 }
 
-// Indexer for motion
-byte ix;
+byte half[128*32/8]; // Half screen buffer
+
+byte ix; // Indexer for motion
+
 void loop() {
 #ifdef __MINGW32__
   delay(40);
 #endif
   ix++; // TODO: correction on roll over 255 => ? (where ? is currently 0)
-  for(byte y = 0; y < 64; y += 8) {
+  byte *p_half = half;
+  SPI.setBitOrder(MSBFIRST);
+  for(byte y = 0; y < 32; y += 8) {
     for (byte x = 0; x < 128; x++) {
       int8_t xs = x - 64;
       int8_t ys = y - 32;
       byte cell = 0;
       for(byte z = 0; z < 8; z++, ys++) {
-        cell >>= 1;
+        cell <<= 1;
         // Mask out centre + avoid divide by zero
         if(xs < -10 || xs > 10 || ys < -10 || ys > 10) {
           // Calculate distance from centre, perspective correction costs one division
@@ -69,12 +73,14 @@ void loop() {
             // Calculate pixel color
             //bool pixel = readtex(tex_x, tex_y); // USE TEXTURE
             bool pixel = 1 & (tex_x ^ tex_y);   // USE CHECKERS
-            cell |= pixel << 7;
+            cell |= pixel;
           }
         }
       }
-      SPI.transfer(cell);
+      SPI.transfer(*p_half++ = cell);
     }
   }
+  SPI.setBitOrder(LSBFIRST);
+  for(word n = 0; n != 512; n++) SPI.transfer(*--p_half);
 }
 /* ========================================================== */
