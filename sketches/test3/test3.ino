@@ -32,10 +32,9 @@ int16_t fp_atn2(int16_t y, int16_t x) {
    return (y < 0 ? -a : a) + 798;
 }
 
-uint16_t fp_sqrt(uint16_t val) {
-  uint16_t root, temp;
-  temp = 32;              // max result / 2 
-  root = 0;
+// Fast integer square root
+uint8_t i_sqrt(uint16_t val) {
+  uint8_t root = 0, temp = 32;
   while(temp) {
     if(((uint16_t)(root + temp) * (root + temp)) <= val) root += temp;
     temp = temp >> 1;
@@ -59,7 +58,7 @@ void loop() {
       if(xs == 0 && ys == 0) continue;
 
       // sqrt needs to be optimized, possibly also division if possible
-      int dst = SCALE_Y / fp_sqrt(xs * xs + ys * ys);
+      int dst = SCALE_Y / i_sqrt(xs * xs + ys * ys);
       if(dst > 60) continue; // No point in rendering the aliased centre
       if(dst > 25 && (1&(xs^ys))) continue; // Shadow far region
       int tex_y = (dst + ix) >> 2;
