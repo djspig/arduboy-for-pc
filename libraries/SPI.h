@@ -4,8 +4,8 @@
 #include <emulate.h>
 
 
-#define MSBFIRST 1
-#define LSBFIRST 0
+#define MSBFIRST 0
+#define LSBFIRST 1
 
 static __attribute__((always_inline)) inline
 uint8_t rbit(uint8_t x) {
@@ -17,11 +17,11 @@ uint8_t rbit(uint8_t x) {
 
 class SPIClass {
   private:
-    uint8_t order = LSBFIRST;
+    uint8_t order = MSBFIRST;
   public:
     uint8_t begin();
     uint8_t inline transfer(uint8_t value) {
-      if(order == MSBFIRST) value = rbit(value);
+      if(order == LSBFIRST) value = rbit(value);
       arduboy_spi(value);
     };
     uint8_t inline setBitOrder(uint8_t order) {

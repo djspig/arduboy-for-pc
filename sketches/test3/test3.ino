@@ -52,7 +52,7 @@ void loop() {
 #endif
   ix++; // TODO: correction on roll over 255 => ? (where ? is currently 0)
   byte *p_half = half;
-  SPI.setBitOrder(MSBFIRST);
+  SPI.setBitOrder(LSBFIRST);
   for(byte y = 0; y < 32; y += 8) {
     for (byte x = 0; x < 128; x++) {
       int8_t xs = x - 64;
@@ -80,7 +80,7 @@ void loop() {
       SPI.transfer(*p_half++ = cell);
     }
   }
-  SPI.setBitOrder(LSBFIRST);
+  SPI.setBitOrder(MSBFIRST);
   for(word n = 0; n != 512; n++) SPI.transfer(*--p_half);
 }
 /* ========================================================== */
