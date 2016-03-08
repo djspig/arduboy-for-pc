@@ -37,7 +37,7 @@ int ix;
 
 void loop() {
   delay(40);
-  ix += 2;
+  ix++;
   
   arduboy.clearDisplay();
   for (int x = 0; x < 128; x++) {
@@ -46,13 +46,21 @@ void loop() {
       int ys = y - 32;
       // avoid divide by zero
       if(xs == 0 && ys == 0) continue;
+
+      // sqrt needs to be optimized, possibly also division if possible
+      int dst = SCALE_Y / (int)sqrt(xs * xs + ys * ys);
+      if(dst > 60) continue; // No point in rendering the aliased centre
+      if(dst > 25 && (1&(xs^ys))) continue; // Shadow far region
+      int tex_y = (dst + ix) >> 2;
+
       // can be further optimized
       int tex_x = ((fp_atn2(ys, xs) + ix) * TEX_W * SCALE_X) / 1602;
-      // sqrt needs to be optimized, possibly also division if possible
-      int tex_y = ((int)((SCALE_Y / sqrt(xs * xs + ys * ys))) + ix) >> 2;
+      
       // transfer pixel from texture
-      //arduboy.drawPixel(x, y, readtex(tex_x, tex_y)); // TEXTURE
-      arduboy.drawPixel(x, y, 1&(tex_x^(tex_y)));     // CHECKERPATTERN
+      //bool pixel = readtex(tex_x, tex_y); // TEXTURE
+      bool pixel = 1&(tex_x^tex_y);     // CHECKERPATTERN
+      
+      if(pixel) arduboy.drawPixel(x, y, 1);
     }
   }
   arduboy.display();
