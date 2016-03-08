@@ -3,6 +3,24 @@
 
 Arduboy arduboy;
 
+point {
+  x, y
+}
+
+points[]
+
+line {
+  a,b
+}
+
+starty[] {
+  y,
+  xlist[] {
+    x, slope, count
+  }
+}
+
+
 /* == WARNING - VERY INEFFICIENT CODE - NEEDS OPTIMIZATION == */
 byte tileBit(int x, int y) {
   x = x < 0 ? 0 : x > 511 ? 511 : x;
