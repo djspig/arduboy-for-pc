@@ -165,9 +165,9 @@ uint16_t Arduboy::rawADC(byte adc_bits) {
 
 void Arduboy::blank()
 {
-  sdl_draw_begin(true);
-  for (int a = 0; a < (HEIGHT * WIDTH) / 8; a++) arduboy_spi(0x00);
-  sdl_draw_end();
+  //sdl_draw_begin(true);
+  for (int a = 0; a < (HEIGHT * WIDTH) / 8; a++) SPI.transfer(0x00);
+  //sdl_draw_end();
 }
 
 void Arduboy::clearDisplay()
@@ -942,22 +942,22 @@ void Arduboy::display()
 }
 
 void Arduboy::drawScreen(const unsigned char *image) {
-  sdl_draw_begin(true);
+ // sdl_draw_begin(true);
   for (int a = 0; a < (HEIGHT * WIDTH) / 8; a++)
   {
-    arduboy_spi(pgm_read_byte(image + a));
+    SPI.transfer(pgm_read_byte(image + a));
   }
-  sdl_draw_end();
+  //sdl_draw_end();
 }
 
 void Arduboy::drawScreen(unsigned char image[])
 {
-  sdl_draw_begin(true);
+  //sdl_draw_begin(true);
   for (int a = 0; a < (HEIGHT * WIDTH) / 8; a++)
   {
-    arduboy_spi(image[a]);
+    SPI.transfer(image[a]);
   }
-  sdl_draw_end();
+  //sdl_draw_end();
 }
 
 unsigned char* Arduboy::getBuffer() {

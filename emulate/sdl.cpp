@@ -100,6 +100,17 @@ byte arduboy_buttons() {
   return sdl_buttons;
 }
 
+bool spid;
+
+void arduboy_spi(uint8_t c8) {
+  static uint16_t address = 0;
+  for(byte v = 0; v < 8; v++) {
+    arduboy_pixel(address & 0x7F, ((address >> 7) << 3) + v, (c8 >> v) & 1);
+  }
+  address = (address + 1) & 1023;
+  spid = true;
+}
+
 int main(int argc, char* argv[]) {
   SDL_Event e;
 
@@ -130,6 +141,8 @@ int main(int argc, char* argv[]) {
     return 2;
   }
 
+  sdl_draw_begin(false);
+  
   setup();
 
   // Start playback
@@ -137,6 +150,13 @@ int main(int argc, char* argv[]) {
   
   while(1) {
     loop();
+
+    if(spid) {
+      spid = false;
+      sdl_draw_end();
+      sdl_draw_begin(false);
+    }
+    
     if(SDL_PollEvent(&e))
       if(e.type == SDL_KEYDOWN) {
         if(e.key.keysym.sym == SDLK_ESCAPE) break;

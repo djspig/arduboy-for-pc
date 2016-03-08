@@ -34,13 +34,6 @@ uint32_t millis() {
   return SDL_GetTicks();
 }
 
-void arduboy_spi(byte c8) {
-  static word address = 0;
-  for(byte v = 0; v < 8; v++) {
-    arduboy_pixel(address & 0x7F, ((address >> 7) << 3) + v, (c8 >> v) & 1);
-  }
-  address = (address + 1) & 1023;
-}
 /**/
 
 void set_sleep_mode(byte mode) {
