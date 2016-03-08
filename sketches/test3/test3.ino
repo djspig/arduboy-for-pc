@@ -49,12 +49,13 @@ void loop() {
   delay(40);
 #endif
   ix++; // TODO: correction on roll over 255 => ? (where ? is currently 0)
-  for(byte yz = 0; yz < 64; yz += 8) {
+  for(byte y = 0; y < 64; y += 8) {
     for (byte x = 0; x < 128; x++) {
-      int xs = x - 64;
-      byte cell = 0;bool pixel;
-      for(byte y = yz; y < yz + 8; y++) {
-        int ys = y - 32;
+      int8_t xs = x - 64;
+      int8_t ys = y - 32;
+      byte cell = 0;
+      for(byte z = 0; z < 8; z++, ys++) {
+        cell >>= 1;
         // Mask out centre + avoid divide by zero
         if(xs < -10 || xs > 10 || ys < -10 || ys > 10) {
           // Calculate distance from centre, perspective correction costs one division
@@ -66,16 +67,13 @@ void loop() {
             // Animate X, calculate angle
             byte tex_x = ((fp_atn2(ys, xs) + ix) * TEX_W * SCALE_X) / 1602;
             // Calculate pixel color
-            //pixel = readtex(tex_x, tex_y); // USE TEXTURE
-            pixel = 1 & (tex_x ^ tex_y);   // USE CHECKERS
+            //bool pixel = readtex(tex_x, tex_y); // USE TEXTURE
+            bool pixel = 1 & (tex_x ^ tex_y);   // USE CHECKERS
             cell |= pixel << 7;
           }
         }
-        if(7 == (y & 7)) {
-          SPI.transfer(cell);
-          cell = 0;
-        } else cell >>= 1;
       }
+      SPI.transfer(cell);
     }
   }
 }
