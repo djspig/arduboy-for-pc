@@ -17,7 +17,7 @@ void setup() {
 
 byte readtex(unsigned x, unsigned y) {
   x &=7; y &= 7;
-  return (smiley[x + (y >> 3)] >> (y & 7)) & 1;
+  return (pgm_read_byte(smiley[x + (y >> 3)] >> (y & 7))) & 1;
 }
 
 int32_t fp_atn2(int32_t y, int32_t x) {
