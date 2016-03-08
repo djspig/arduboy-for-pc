@@ -52,7 +52,6 @@ void loop() {
 #endif
   ix++; // TODO: correction on roll over 255 => ? (where ? is currently 0)
   byte *p_half = half;
-  SPI.setBitOrder(LSBFIRST);
   for(byte y = 0; y < 32; y += 8) {
     for (byte x = 0; x < 128; x++) {
       int8_t xs = x - 64;
@@ -69,7 +68,7 @@ void loop() {
             // Animate Y
             byte tex_y = (dst + ix) >> 2;
             // Animate X, calculate angle
-            byte tex_x = ((fp_atn2(ys, xs) + ix) * TEX_W * SCALE_X) / 1602;
+            byte tex_x = ((fp_atn2(ys, xs) * TEX_W * SCALE_X) + ((word)ix * 50)) / 1602;
             // Calculate pixel color
             //bool pixel = readtex(tex_x, tex_y); // USE TEXTURE
             bool pixel = 1 & (tex_x ^ tex_y);   // USE CHECKERS
@@ -77,9 +76,12 @@ void loop() {
           }
         }
       }
-      SPI.transfer(*p_half++ = cell);
+      *p_half++ = cell;
     }
   }
+  p_half = half;
+  SPI.setBitOrder(LSBFIRST);
+  for(word n = 0; n != 512; n++) SPI.transfer(*p_half++);
   SPI.setBitOrder(MSBFIRST);
   for(word n = 0; n != 512; n++) SPI.transfer(*--p_half);
 }
