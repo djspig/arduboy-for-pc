@@ -3,7 +3,6 @@
 #include <stdint.h>
 #include <emulate.h>
 
-
 #define MSBFIRST 0
 #define LSBFIRST 1
 
