@@ -131,6 +131,7 @@ public:
   void blank();
   void clearDisplay();
   void display();
+  unsigned char inline *direct() { return sBuffer; };
   void drawScreen(const unsigned char *image);
   void drawScreen(unsigned char image[]);
   void drawPixel(int x, int y, uint8_t color);

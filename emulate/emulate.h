@@ -59,5 +59,9 @@ static inline byte pgm_read_byte(const byte *wat) {
   return *wat;
 }
 
+static inline word pgm_read_word(const word *wat) {
+  return *wat;
+}
+
 /* END OF SAID SHEITE */
 #endif//__ARDUBOY_EMULATE_H__
