@@ -5,9 +5,15 @@ Arduboy arduboy;
 
 byte *rambuf;
 
+#define TEXTURE(A, B) (((A) ^ (B)) & 1) // CHECKERS
+//#define TEXTURE(A, B) (((A) & 3) == ((B) & 3)) // SPIRAL
+//#define TEXTURE(B, A) ((rwlk[(A) + ((B) >> 3) * 256] << ((B) & 7)) & 128) // RAMWALK
+//byte rwlk[256*32];
+
 void setup() {
   rambuf = arduboy.direct();
-/*
+  //for(word n = 0; n < 256*32; n++) rwlk[n] = rand();
+  /*
   for(word n = 0; n < 8192; n++) {
     printf((n&15) ? " " : "  ");
     //printf("0x%02X%02X,", x_lut[8191-n], y_lut[8191-n]);
@@ -23,13 +29,13 @@ word ix;     // Animation indexer
 
 void loop() {
 #ifdef __EMULATING__
-  delay(30); // Delay for emulator
+  delay(33); // Delay for emulator @ 40fps
 #endif
 
   static int hx = 0, hy = 0;  // Tunnel center coordinates
 
   // Progress animation
-  ix += 3;
+  ix += 2;
 
   // Compute ship position (replace with user control?)
   sx = sin((float)ix / 113) * 64;
@@ -76,21 +82,19 @@ void loop() {
     byte yterm = cy, dy;
     for(dy = 0; dy < cy; dy++, yterm--, b8 >>= 1) {
       word t = pgm_read_word(&lut[128 * yterm + xterm]); // Polar coords from LUT
-      byte ty = t; // Texture Y from LSB
-      if(ty != 0) { // Distance shadow mask
-        byte tx = t >> 8; // Texture X from MSB
-        tx = (tx + ((ty * twist) >> 8) + ix) >> 4; // Scale and animate
-        if((tx ^ ((ty + ix) >> 4)) & 1) b8 |= 0x80;
+      if((byte)t != 0) { // Distance shadow mask
+        byte tx = ((64 + (t >> 8)) + (((byte)t * twist) >> 8) + ix) >> 4; // Scale and animate X
+        byte ty = ((byte)t + ix) >> 4;
+        if(TEXTURE(tx, ty)) b8 |= 0x80;
       }
       if(7 == (dy & 7)) rambuf[(dy & 0xF8) * 16 + dx] = b8;
     }
     for(; dy < 64; dy++, yterm++, b8 >>= 1) {
       word t = pgm_read_word(&lut[128 * yterm + xterm]); // Polar coords from LUT
-      byte ty = t; // Texture Y from LSB
-      if(ty != 0) { // Distance shadow mask
-        byte tx = (63 - (t >> 8)) | 64; // Texture X from MSB
-        tx = (tx + ((ty * twist) >> 8) + ix) >> 4; // Scale and animate
-        if((tx ^ ((ty + ix) >> 4)) & 1) b8 |= 0x80;
+      if((byte)t != 0) { // Distance shadow mask
+        byte tx = ((64-(t >> 8)) + (((byte)t * twist) >> 8) + ix) >> 4; // Scale and animate
+        byte ty = ((byte)t + ix) >> 4;
+        if(TEXTURE(tx, ty)) b8 |= 0x80;
       }
       if(7 == (dy & 7)) rambuf[(dy & 0xF8) * 16 + dx] = b8;
     }
@@ -99,21 +103,19 @@ void loop() {
     byte yterm = cy, dy;
     for(dy = b8 = 0; dy < cy; dy++, yterm--, b8 >>= 1) {
       word t = pgm_read_word(&lut[128 * yterm + xterm]); // Polar coords from LUT
-      byte ty = t; // Texture Y from LSB
-      if(ty != 0) { // Distance shadow mask
-        byte tx = (63 - (t >> 8)) | 128; // Texture X from MSB
-        tx = (tx + ((ty * twist) >> 8) + ix) >> 4; // Scale and animate
-        if((tx ^ ((ty + ix) >> 4)) & 1) b8 |= 0x80;
+      if((byte)t != 0) { // Distance shadow mask
+        byte tx = ((191 - (t >> 8)) + (((byte)t * twist) >> 8) + ix) >> 4; // Scale and animate
+        byte ty = ((byte)t + ix) >> 4;
+        if(TEXTURE(tx, ty)) b8 |= 0x80;
       }
       if(7 == (dy & 7)) rambuf[(dy & 0xF8) * 16 + dx] = b8;
     }
     for(; dy < 64; dy++, yterm++, b8 >>= 1) {
       word t = pgm_read_word(&lut[128 * yterm + xterm]); // Polar coords from LUT
-      byte ty = t; // Texture Y from LSB
-      if(ty != 0) { // Distance shadow mask
-        byte tx = (t >> 8) | 192; // Texture X from MSB
-        tx = (tx + ((ty * twist) >> 8) + ix) >> 4; // Scale and animate
-        if((tx ^ ((ty + ix) >> 4)) & 1) b8 |= 0x80;
+      if((byte)t != 0) { // Distance shadow mask
+        byte tx = (((t >> 8) | 192) + (((byte)t * twist) >> 8) + ix) >> 4; // Scale and animate
+        byte ty = ((byte)t + ix) >> 4;
+        if(TEXTURE(tx, ty)) b8 |= 0x80;
       }
       if(7 == (dy & 7)) rambuf[(dy & 0xF8) * 16 + dx] = b8;
     }
