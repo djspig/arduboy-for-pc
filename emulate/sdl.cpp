@@ -70,6 +70,26 @@ void arduboy_pixel( short x, short y, bool white ) {
   SDL_FillRect(screen, &pixel, color);
 }
 
+// Draws an alpha-blended pixel, used by draw_line
+void arduboy_color( short x, short y, uint8_t white ) {
+  SDL_Rect pixel = {
+    (Sint16)((rect.w / 2) - ((64 - x) << ARDUBOY_ENHANCE)),
+    (Sint16)((rect.h / 3) - ((32 - y) << ARDUBOY_ENHANCE)),
+    1 << ARDUBOY_ENHANCE,
+    1 << ARDUBOY_ENHANCE
+  };
+  
+  uint32_t color;
+  
+  if(x < 0 || x > 127 || y < 0 || y > 63) {
+    color = clip ? 0xFFFFFF : (white ? 0xF0F0F0 : 0xC0C0C0);
+  } else {
+    color = white + (white << 8) + (white << 16);
+  }
+  
+  SDL_FillRect(screen, &pixel, color);
+}
+
 static void arduboy_frame() {
   SDL_Rect frame = {
     (Sint16)(((rect.w / 2) - (64 << ARDUBOY_ENHANCE)) - 1),

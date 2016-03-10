@@ -20,6 +20,7 @@ void audio(samp32bit recv[][2], samp32bit send[][2], int nsamples);
 void sdl_audio(void *udata, Uint8 *stream, int len);
 
 void arduboy_pixel( short x, short y, bool white );
+void arduboy_color( short x, short y, uint8_t white );
 
 byte arduboy_buttons();
 
