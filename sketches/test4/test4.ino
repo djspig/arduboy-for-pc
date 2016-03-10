@@ -29,7 +29,7 @@ word ix;     // Animation indexer
 
 void loop() {
 #ifdef __EMULATING__
-  delay(33); // Delay for emulator @ 40fps
+  delay(33); // Delay for emulator @ 30fps
 #endif
 
   static int hx = 0, hy = 0;  // Tunnel center coordinates
