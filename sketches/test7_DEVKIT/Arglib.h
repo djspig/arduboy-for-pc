@@ -122,7 +122,7 @@ public:
   void blank();
   void clearDisplay();
   void display();
-  unsigned char inline *direct() { return sBuffer; };
+   unsigned char inline *direct() { return sBuffer; };
   void drawScreen(const unsigned char *image);
   void drawScreen(unsigned char image[]);
   void drawPixel(int x, int y, uint8_t color);
@@ -201,11 +201,7 @@ public:
   /**
   This must be called before any of the other button member functions.  It should be called either in your main `loop()` or as part of the frame system (called pre-frame).
   */
-<<<<<<< HEAD
-  void poll();
-=======
   uint8_t poll();
->>>>>>> origin/master
   boolean pressed(uint8_t buttons);
   boolean notPressed(uint8_t buttons);
   boolean justPressed(uint8_t button);

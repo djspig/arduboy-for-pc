@@ -11,8 +11,13 @@ byte *rambuf;
 //byte rwlk[256*32];
 
 void setup() {
+<<<<<<< HEAD
   arduboy.start();
   rambuf = arduboy.direct();
+=======
+  rambuf = arduboy.direct();
+  arduboy.start();
+>>>>>>> origin/master
   //for(word n = 0; n < 256*32; n++) rwlk[n] = rand();
   /*
   for(word n = 0; n < 8192; n++) {
@@ -131,4 +136,8 @@ void loop() {
   
   // Flip
   arduboy.display();
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/master
 }
