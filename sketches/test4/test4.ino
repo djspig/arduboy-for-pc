@@ -12,7 +12,33 @@ static byte *video;
 #define SHIP_SPD 2000 // Top speed
 
 // Tunnel texture (this needs work for sure)
-#define TEXTURE(A, B, I) ((((A)+(I)) ^ ((B)+(I))) & 0x10) // Checkerboard pattern
+//#define TEXTURE(A, B, I) ((((A)+(I/2)) ^ ((B)+(I))) & 0x10) // Checkerboard pattern
+
+byte world[] = {
+  0b10101010, 0b01010101, 0b10101010, 0b01010101, 0b10101010, 0b01010101, 0b10101010, 0b01010101,
+  0b10101010, 0b01010101, 0b10101010, 0b11111111, 0b10101010, 0b01010101, 0b10101010, 0b01010101,
+  0b10101010, 0b01010101, 0b10101010, 0b01010101, 0b10101010, 0b01010101, 0b10101010, 0b01010101,
+  0b10101010, 0b11111111, 0b10101010, 0b01010101, 0b10101010, 0b01010101, 0b10101010, 0b01010101,
+  0b10101010, 0b01010101, 0b11111111, 0b01010101, 0b10101010, 0b01010101, 0b00000000, 0b01010101,
+  0b10101010, 0b01010101, 0b10101010, 0b11111111, 0b10101010, 0b01010101, 0b00000000, 0b11111111,
+  0b10101010, 0b01010101, 0b10101010, 0b11110000, 0b10101010, 0b01010101, 0b10101010, 0b00000000,
+  0b10101010, 0b01010101, 0b11111111, 0b01010101, 0b11111111, 0b01010101, 0b00000000, 0b01010101,
+  0b10101010, 0b01010101, 0b10101010, 0b01010101, 0b11001100, 0b11001100, 0b00110011, 0b00110011,
+  0b11001100, 0b11001100, 0b00110011, 0b00110011, 0b11110000, 0b11110000, 0b11110000, 0b11110000,
+  0b00001111, 0b00001111, 0b00001111, 0b00001111, 0b11110000, 0b11110000, 0b11110000, 0b11110000,
+  0b00001111, 0b00001111, 0b00001111, 0b00001111, 0b00000000, 0b00000000, 0b11111111, 0b00000000,
+  0b11111111, 0b10001000, 0b01000100, 0b00100010, 0b00010001, 0b10001000, 0b01000100, 0b00100010,
+  0b00010001, 0b11111111, 0b00010001, 0b00100010, 0b01000100, 0b10001000, 0b00010001, 0b00100010,
+  0b01000100, 0b10001000, 0b11111111, 0b00000000, 0b11111111, 0b00000000, 0b00000000, 0b11101111,
+  0b00111000, 0b11111101, 0b00000111, 0b10111111, 0b11100000, 0b11110111, 0b00011100, 0b00000000,
+};
+
+__attribute__((always_inline))
+static bool inline texturizer(byte x, byte y, word i) {
+  return world[((y + i * 2) >> 4) & (sizeof(world) - 1)] & (1 << (((x + i / 4) >> 4) & 7));
+}
+
+#define TEXTURE(A, B, I) texturizer(A, B, I)
 
 // Various helper macros
 #define INPUT(X) (input & (X))                      // Check for button pressed
@@ -125,20 +151,23 @@ void loop() {
   
   // Coord-system conversion
   int wx, wy;
-  
-  // Draw bombs
-  wx = MSB(bx) + cx - 7;
-  wy = MSB(by) + cy;
+
+  // Draw bomb
   if(bl) {
-    bl--;
+    wx = MSB(bx) + cx - 7;
+    wy = MSB(by) + cy;
     arduboy.drawSprite(wx, wy, bullet, 7, 8, (bl >> 3) + (ix & 8 ? 1 : 0), BLACK);
     if(!(ix & 4)) arduboy.drawSprite(wx, wy, bullet, 7, 8, (bl >> 3) + (ix & 8 ? 9 : 1), WHITE);
+    bl--;
   }
   
   // Draw lasers
   wx = MSB(sx) + cx;
   wy = MSB(sy) + cy + 2;
   if(INPUT(BTN_A) && (ix & 2)) {
+    arduboy.drawLine(wx + (ix & 4 ? -5 : +3), wy, cx + (ix & 4 ? -1 : +1), cy, BLACK);
+    arduboy.drawLine(wx + (ix & 4 ? -3 : +5), wy, cx + (ix & 4 ? -1 : +1), cy, BLACK);
+    arduboy.drawLine(wx + (ix & 4 ? +4 : -4), wy, cx + (ix & 4 ? +1 : -1), cy, BLACK);
     arduboy.drawLine(wx + (ix & 4 ? -4 : +4), wy, cx + (ix & 4 ? -1 : +1), cy, WHITE);
   }
   
