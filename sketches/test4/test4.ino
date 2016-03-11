@@ -110,12 +110,11 @@ void loop() {
   
   // Clear drawing area
   arduboy.clearDisplay();
-  
   // Draw tunnel using LUTs (expanded to quads for performance)
-  byte dx, b8, xterm = cx;
-  for(dx = b8 = 0; dx < cx; dx++, xterm--) {
+  byte dx, b8;
+  const word *lptr = &lut[128 * cy + cx];
+  for(dx = b8 = 0; dx < cx; dx++, lptr -= 1 + (32 - cy) * 256) {
     byte  dy,  *vptr = &video[dx];
-    const word *lptr = &lut[128 * cy + xterm];
     for(dy = 0; dy < cy; dy++, lptr -= 128, b8 >>= 1) {
       word t = pgm_read_word(lptr); // Quadrant 1
       if(LSB(t) != 0 && TEXTURE(64 + MSB(t), LSB(t), ix)) b8 |= 0x80;
@@ -127,9 +126,8 @@ void loop() {
       if(7 == (dy & 7)) *vptr = b8, vptr += 128;
     }
   }
-  for(; dx < 128; dx++, xterm++) {
+  for(; dx < 128; dx++, lptr += 1 - (32 - cy) * 256) {
     byte  dy,  *vptr = &video[dx];
-    const word *lptr = &lut[128 * cy + xterm];
     for(dy = b8 = 0; dy < cy; dy++, lptr -= 128, b8 >>= 1) {
       word t = pgm_read_word(lptr); // Quadrant 3
       if(LSB(t) != 0 && TEXTURE(191 - MSB(t), LSB(t), ix)) b8 |= 0x80;
