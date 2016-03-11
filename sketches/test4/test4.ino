@@ -46,6 +46,8 @@ static bool inline texturizer(byte x, byte y, word i) {
 #define MSB(X)   ((X) >> 0x8)                       // Extract most significant byte
 #define LSB(X)   ((byte)(X))                        // Extract least significant byte
 
+
+
 // Local variables
 static int  vx, vy; // Ship velocity
 static int  sx, sy; // Ship coordinates
@@ -110,35 +112,36 @@ void loop() {
   arduboy.clearDisplay();
   
   // Draw tunnel using LUTs (expanded to quads for performance)
-  byte xterm = cx, dx, b8;
+  byte dx, b8, xterm = cx;
   for(dx = b8 = 0; dx < cx; dx++, xterm--) {
-    byte yterm = cy, dy;
-    byte *vptr = &video[dx];
-    for(dy = 0; dy < cy; dy++, yterm--, b8 >>= 1) {
-      word t = pgm_read_word(&lut[128 * yterm + xterm]); // Quadrant 1
+    byte  dy,  *vptr = &video[dx];
+    const word *lptr = &lut[128 * cy + xterm];
+    for(dy = 0; dy < cy; dy++, lptr -= 128, b8 >>= 1) {
+      word t = pgm_read_word(lptr); // Quadrant 1
       if(LSB(t) != 0 && TEXTURE(64 + MSB(t), LSB(t), ix)) b8 |= 0x80;
       if(7 == (dy & 7)) *vptr = b8, vptr += 128;
     }
-    for(; dy < 64; dy++, yterm++, b8 >>= 1) {
-      word t = pgm_read_word(&lut[128 * yterm + xterm]); // Quadrant 2
+    for(; dy < 64; dy++, lptr += 128, b8 >>= 1) {
+      word t = pgm_read_word(lptr); // Quadrant 2
       if(LSB(t) != 0 && TEXTURE(63 - MSB(t), LSB(t), ix)) b8 |= 0x80;
       if(7 == (dy & 7)) *vptr = b8, vptr += 128;
     }
   }
   for(; dx < 128; dx++, xterm++) {
-    byte yterm = cy, dy;
-    byte *vptr = &video[dx];
-    for(dy = b8 = 0; dy < cy; dy++, yterm--, b8 >>= 1) {
-      word t = pgm_read_word(&lut[128 * yterm + xterm]); // Quadrant 3
+    byte  dy,  *vptr = &video[dx];
+    const word *lptr = &lut[128 * cy + xterm];
+    for(dy = b8 = 0; dy < cy; dy++, lptr -= 128, b8 >>= 1) {
+      word t = pgm_read_word(lptr); // Quadrant 3
       if(LSB(t) != 0 && TEXTURE(191 - MSB(t), LSB(t), ix)) b8 |= 0x80;
       if(7 == (dy & 7)) *vptr = b8, vptr += 128;
     }
-    for(; dy < 64; dy++, yterm++, b8 >>= 1) {
-      word t = pgm_read_word(&lut[128 * yterm + xterm]); // Quadrant 4
+    for(; dy < 64; dy++, lptr += 128, b8 >>= 1) {
+      word t = pgm_read_word(lptr); // Quadrant 4
       if(LSB(t) != 0 && TEXTURE(192 + MSB(t), LSB(t), ix)) b8 |= 0x80;
       if(7 == (dy & 7)) *vptr = b8, vptr += 128;
     }
   }
+
 
   // Screen flashing
   if(twist > 110) {
