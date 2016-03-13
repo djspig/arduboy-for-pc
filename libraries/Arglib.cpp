@@ -1001,9 +1001,9 @@ void Arduboy::swap(int16_t& a, int16_t& b) {
   b = temp;
 }
 
-uint8_t SimpleButtons::poll() {
+void SimpleButtons::poll() {
   previousButtonState = currentButtonState;
-  return (currentButtonState = arduboy->getInput());
+  currentButtonState = arduboy->getInput();
 }
 
 boolean SimpleButtons::justPressed(uint8_t button) {

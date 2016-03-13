@@ -53,7 +53,7 @@
 #define RUNNER_DUCKING 9
 
 Arduboy arduboy;
-SimpleButtons buttons(arduboy);
+SimpleButtons buttons (arduboy);
 
 //determines the state of the game
 unsigned char gameState = STATE_MENU_MAIN;

@@ -211,7 +211,7 @@ public:
   /**
   This must be called before any of the other button member functions.  It should be called either in your main `loop()` or as part of the frame system (called pre-frame).
   */
-  uint8_t poll();
+  void poll();
   boolean pressed(uint8_t buttons);
   boolean notPressed(uint8_t buttons);
   boolean justPressed(uint8_t button);

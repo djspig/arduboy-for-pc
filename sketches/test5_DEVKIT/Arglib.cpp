@@ -972,10 +972,17 @@ void Arduboy::swap(int16_t& a, int16_t& b) {
 }
 
 
+<<<<<<< HEAD
+void SimpleButtons::poll()
+{
+  previousButtonState = currentButtonState;
+  currentButtonState = arduboy->getInput();
+=======
 uint8_t SimpleButtons::poll()
 {
   previousButtonState = currentButtonState;
   return (currentButtonState = arduboy->getInput());
+>>>>>>> origin/master
 }
 // returns true if a button has just been pressed
 // if the button has been held down for multiple frames this will return
