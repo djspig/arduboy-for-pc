@@ -10,11 +10,18 @@ static byte *video;
 #define SHIP_DEC   40 // Decelleration
 #define SHIP_ACC   20 // Accelleration
 #define SHIP_SPD 2000 // Top speed
+#define PARTICLES  25 // Number of particles
 
 // Tunnel texture (this needs work for sure)
 //#define TEXTURE(A, B, I) ((((A)+(I/2)) ^ ((B)+(I))) & 0x10) // Checkerboard pattern
 
-byte world[] = {
+static struct {
+  int px, py;  // Position
+  int vx, vy;  // Velocity
+  byte lt;     // Lifetime
+} particles[PARTICLES];
+
+static byte world[] = {
   0b10101010, 0b01010101, 0b10101010, 0b01010101, 0b10101010, 0b01010101, 0b10101010, 0b01010101,
   0b10101010, 0b01010101, 0b10101010, 0b11111111, 0b10101010, 0b01010101, 0b10101010, 0b01010101,
   0b10101010, 0b01010101, 0b10101010, 0b01010101, 0b10101010, 0b01010101, 0b10101010, 0b01010101,
@@ -41,12 +48,10 @@ static bool inline texturizer(byte x, byte y, word i) {
 #define TEXTURE(A, B, I) texturizer(A, B, I)
 
 // Various helper macros
-#define INPUT(X) (input & (X))                      // Check for button pressed
+#define INP(X) (input & (X))                        // Check for user input
 #define ISGN(X)  ((X) == 0 ? 0 : (X) > 0 ? -1 : +1) // Inverse sign function
 #define MSB(X)   ((X) >> 0x8)                       // Extract most significant byte
 #define LSB(X)   ((byte)(X))                        // Extract least significant byte
-
-
 
 // Local variables
 static int  vx, vy; // Ship velocity
@@ -61,6 +66,19 @@ static int  hx, hy; // Autotracking tunnel centre coordinates
 void setup() {
   arduboy.start();
   video = arduboy.direct();
+}
+
+static void spawnParticle(int sx, int sy) {
+  for(byte n = 0; n < PARTICLES; n++) {
+    if(particles[n].lt == 0) {
+      particles[n].lt = rand();
+      particles[n].px = sx;
+      particles[n].py = sy;
+      particles[n].vx = (int)((char)rand());
+      particles[n].vy = (int)((char)rand()) - 128;
+      break;
+    }
+  }
 }
 
 // Main demo/game code
@@ -78,12 +96,12 @@ void loop() {
 
   // User control
   bool engine = false;
-  if(INPUT(DPAD_L)) engine = true, vx = max(-SHIP_SPD, vx - (SHIP_DEC + SHIP_ACC));
-  if(INPUT(DPAD_R)) engine = true, vx = min(+SHIP_SPD, vx + (SHIP_DEC + SHIP_ACC));
-  if(INPUT(DPAD_U)) engine = true, vy = max(-SHIP_SPD, vy - (SHIP_DEC + SHIP_ACC));
-  if(INPUT(DPAD_D)) engine = true, vy = min(+SHIP_SPD, vy + (SHIP_DEC + SHIP_ACC));
+  if(INP(DPAD_L)) engine = true, vx = max(-SHIP_SPD, vx - (SHIP_DEC + SHIP_ACC));
+  if(INP(DPAD_R)) engine = true, vx = min(+SHIP_SPD, vx + (SHIP_DEC + SHIP_ACC));
+  if(INP(DPAD_U)) engine = true, vy = max(-SHIP_SPD, vy - (SHIP_DEC + SHIP_ACC));
+  if(INP(DPAD_D)) engine = true, vy = min(+SHIP_SPD, vy + (SHIP_DEC + SHIP_ACC));
 
-  if(INPUT(BTN_B) && !bl) {
+  if(INP(BTN_B) && !bl) {
     bl = 64; bx = sx; by = sy;
     twist = 120;
   } else if(twist) twist = MSB(twist * 250);
@@ -114,7 +132,7 @@ void loop() {
   // Draw tunnel using LUTs (expanded to quads for performance)
   byte dx, xterm = cx;
   for(dx = 0; dx < cx; dx++, xterm--) {
-    byte  b8, dy,  *vptr = &video[dx];
+    byte  dy, b8 = 0, *vptr = &video[dx];
     const word *lptr = &lut[128 * cy + xterm];
     for(dy = 0; dy < cy; dy++, lptr -= 128, b8 >>= 1) {
       word t = pgm_read_word(lptr); // Quadrant 1
@@ -128,7 +146,7 @@ void loop() {
     }
   }
   for(; dx < 128; dx++, xterm++) {
-    byte  b8, dy,  *vptr = &video[dx];
+    byte  dy, b8 = 0, *vptr = &video[dx];
     const word *lptr = &lut[128 * cy + xterm];
     for(dy = 0; dy < cy; dy++, lptr -= 128, b8 >>= 1) {
       word t = pgm_read_word(lptr); // Quadrant 3
@@ -167,7 +185,7 @@ void loop() {
   // Draw lasers
   wx = MSB(sx) + cx;
   wy = MSB(sy) + cy + 2;
-  if(INPUT(BTN_A) && (ix & 2)) {
+  if(INP(BTN_A) && (ix & 2)) {
     arduboy.drawLine(wx + (ix & 4 ? -5 : +3), wy, cx + (ix & 4 ? -1 : +1), cy, BLACK);
     arduboy.drawLine(wx + (ix & 4 ? -3 : +5), wy, cx + (ix & 4 ? -1 : +1), cy, BLACK);
     arduboy.drawLine(wx + (ix & 4 ? +4 : -4), wy, cx + (ix & 4 ? +1 : -1), cy, BLACK);
@@ -181,7 +199,33 @@ void loop() {
   arduboy.drawSprite(wx, wy, ship, 15, 16, 1, WHITE);
   if(engine && ix & 4) arduboy.drawSprite(wx, wy, ship, 15, 16, 2, WHITE); // Engine
   
+  // Spawn engine particles
+  if(engine && ((ix & 15) == 0)) {
+    spawnParticle(sx + (ix & 2 ? -512 : +512), sy + 2560);
+  }
+
+  // Animate and render particle system
+  for(byte n = 0; n < PARTICLES; n++) {
+    if(particles[n].lt != 0) {
+      particles[n].vy += 20;
+      particles[n].px += particles[n].vx;
+      particles[n].py += particles[n].vy;
+      wx = MSB(particles[n].px) + cx;
+      wy = MSB(particles[n].py) + cy;
+      if(wx < 0 || wx > 128 || wy < 0 || wy > 64) {
+        particles[n].lt = 0;
+      } else {
+        byte c = rand();
+        if(particles[n].lt + 64 > c) {
+          arduboy.drawPixel(wx, wy, particles[n].lt > c ? WHITE : BLACK);
+        }
+        particles[n].lt--;
+      }
+      
+    }
+  }
+  
   // Flip
   arduboy.display();
-
+  
 }

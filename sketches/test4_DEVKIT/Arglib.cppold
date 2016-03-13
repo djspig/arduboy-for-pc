@@ -1,14 +1,5 @@
 #include "Arglib.h"
-
-/* LOW-FOOTPRINT PROGRAMMABLE INTERRUPT VECTORS */
-__attribute__ (( naked )) void fnop() { asm("RETI"); }
-#define LISR(vector, ...) void vector (void) __attribute__((signal)) __VA_ARGS__; void vector (void)
-static uint8_t scratch;
-static void (*fT1CA)(), (*fT3CA)();
-LISR(TIMER1_COMPA);
-LISR(TIMER3_COMPA);
-/* ============================================ */
-
+ 
 const byte PROGMEM tune_pin_to_timer_PGM[] = { 3, 1 };
 volatile byte *_tunes_timer1_pin_port;
 volatile byte _tunes_timer1_pin_mask;
@@ -38,56 +29,48 @@ Arduboy::Arduboy() { }
 // directly
 SimpleButtons::SimpleButtons(Arduboy &a) {arduboy = &a;}
 
-void Arduboy::startAudio() {
-  fT1CA = TIMER1_COMPA;
-  fT3CA = TIMER3_COMPA;
-  tunes.initChannel(PIN_SPEAKER_1);
-  tunes.initChannel(PIN_SPEAKER_2);
-  audio.setup();
-}
-
-void Arduboy::start() {
-#if F_CPU == 8000000L
+void Arduboy::start()
+{
+  #if F_CPU == 8000000L
   slowCPU();
-#endif
+  #endif
 
   SPI.begin();
-  fastMode(DC, OUTPUT);
-  fastMode(CS, OUTPUT);
-  fastMode(RST, OUTPUT);
-  fastMode(PIN_LEFT_BUTTON, INPUT);  fastWrite(PIN_LEFT_BUTTON,  HIGH);
-  fastMode(PIN_RIGHT_BUTTON, INPUT); fastWrite(PIN_RIGHT_BUTTON, HIGH);
-  fastMode(PIN_UP_BUTTON, INPUT);    fastWrite(PIN_UP_BUTTON,    HIGH);
-  fastMode(PIN_DOWN_BUTTON, INPUT);  fastWrite(PIN_DOWN_BUTTON,  HIGH);
-  fastMode(PIN_A_BUTTON, INPUT);     fastWrite(PIN_A_BUTTON,     HIGH);
-  fastMode(PIN_B_BUTTON, INPUT);     fastWrite(PIN_B_BUTTON,     HIGH);
-  
-  /*
-  // TODO: Initialize elsewhere, only if asked for (requires lots of flash)
-  startAudio();
-  */
+  pinMode(DC, OUTPUT);
+  pinMode(CS, OUTPUT);
+  pinMode(PIN_LEFT_BUTTON, INPUT_PULLUP);
+  pinMode(PIN_RIGHT_BUTTON, INPUT_PULLUP);
+  pinMode(PIN_UP_BUTTON, INPUT_PULLUP);
+  pinMode(PIN_DOWN_BUTTON, INPUT_PULLUP);
+  pinMode(PIN_A_BUTTON, INPUT_PULLUP);
+  pinMode(PIN_B_BUTTON, INPUT_PULLUP);
+  tunes.initChannel(PIN_SPEAKER_1);
+  tunes.initChannel(PIN_SPEAKER_2);
 
-  //csport = portOutputRegister(digitalPinToPort(CS));
-  //cspinmask = digitalPinToBitMask(CS);
-  //dcport = portOutputRegister(digitalPinToPort(DC));
-  //dcpinmask = digitalPinToBitMask(DC);
+
+  csport = portOutputRegister(digitalPinToPort(CS));
+  cspinmask = digitalPinToBitMask(CS);
+  dcport = portOutputRegister(digitalPinToPort(DC));
+  dcpinmask = digitalPinToBitMask(DC);
 
   /**
    * Setup reset pin direction (used by both SPI and I2C)
    */
-//  fastWrite(RST, HIGH);
-//  delay(1);           // VDD (3.3V) goes high at start, lets just chill for a ms
-//  fastWrite(RST, LOW);   // bring reset low
+  pinMode(RST, OUTPUT);
+  digitalWrite(RST, HIGH);
+  delay(1);           // VDD (3.3V) goes high at start, lets just chill for a ms
+  digitalWrite(RST, LOW);   // bring reset low
   delay(10);          // wait 10ms
-  fastWrite(RST, HIGH);  // bring out of reset
+  digitalWrite(RST, HIGH);  // bring out of reset
 
   bootLCD();
 
   #ifdef SAFE_MODE
-  if(getInput() & (LEFT_BUTTON+UP_BUTTON))
+  if (pressed(LEFT_BUTTON+UP_BUTTON))
     safeMode();
   #endif
 
+  audio.setup();
   saveMuchPower();
 }
 
@@ -104,38 +87,49 @@ void Arduboy::slowCPU()
 }
 #endif
 
-const uint8_t PROGMEM lcd_init_seq[] = {
-  0xAE,             // Display Off
-  0XD5, 0xF0,       // Set Display Clock Divisor 
-  0xA8, 0x3F,       // Set Multiplex Ratio v
-  0xD3, 0x00,       // Set Display Offset v
-  0x40,             // Set Start Line (0)
-  0x8D, 0x14,       // Charge Pump Setting: Enable   
-  0x20, 0x00,       // Set Memory Mode: Horizontal Addressing
-  0xA1,             // Set Segment Re-map (A0) | (b0001)
-  0xC8,             // Set COM Output Scan Direction
-  0xDA, 0x12,       // Set COM Pins
-  0x81, 0xCF,       // Set Contrast v
-  0xD9, 0xF1,       // Set Precharge
-  0xDB, 0x40,       // Set VCom Detect
-  0xA4,             // Entire Display ON
-  0xA6,             // Set normal/inverse display
-  0xAF,             // Display On
-  0x21, 0x00, 0x7F, // Set columns
-  0x22, 0x00, 0x07, // Set pages
-  0xFF
-};
+void Arduboy::bootLCD()
+{
+  LCDCommandMode();
+  SPI.transfer(0xAE);  // Display Off
+  SPI.transfer(0XD5);  // Set Display Clock Divisor v
+  SPI.transfer(0xF0);  //   0x80 is default
+  SPI.transfer(0xA8);  // Set Multiplex Ratio v
+  SPI.transfer(0x3F);
+  SPI.transfer(0xD3);  // Set Display Offset v
+  SPI.transfer(0x0);
+  SPI.transfer(0x40);  // Set Start Line (0)
+  SPI.transfer(0x8D);  // Charge Pump Setting v
+  SPI.transfer(0x14);  //   Enable
+  // why are we running this next pair twice?
+  SPI.transfer(0x20);  // Set Memory Mode v
+  SPI.transfer(0x00);  //   Horizontal Addressing
+  SPI.transfer(0xA1);  // Set Segment Re-map (A0) | (b0001)
+  SPI.transfer(0xC8);  // Set COM Output Scan Direction
+  SPI.transfer(0xDA);  // Set COM Pins v
+  SPI.transfer(0x12);
+  SPI.transfer(0x81);  // Set Contrast v
+  SPI.transfer(0xCF);
+  SPI.transfer(0xD9);  // Set Precharge
+  SPI.transfer(0xF1);
+  SPI.transfer(0xDB);  // Set VCom Detect
+  SPI.transfer(0x40);
+  SPI.transfer(0xA4);  // Entire Display ON
+  SPI.transfer(0xA6);  // Set normal/inverse display
+  SPI.transfer(0xAF);  // Display On
 
-void Arduboy::bootLCD() {
-  fastWrite(DC, 1); // Command mode
-  const uint8_t *p_seq = lcd_init_seq; 
-  while(1) {
-    uint8_t cmd = pgm_read_byte(p_seq);
-    if(cmd == 0xFF) break;
-    SPI.transfer(cmd);
-    p_seq++;
-  }
-  fastWrite(DC, 1); // Data mode
+  LCDCommandMode();
+  SPI.transfer(0x20);     // set display mode
+  SPI.transfer(0x00);     // horizontal addressing mode
+
+  SPI.transfer(0x21);     // set col address
+  SPI.transfer(0x00);
+  SPI.transfer(COLUMN_ADDRESS_END);
+
+  SPI.transfer(0x22); // set page address
+  SPI.transfer(0x00);
+  SPI.transfer(PAGE_ADDRESS_END);
+
+  LCDDataMode();
 }
 
 // Safe Mode is engaged by holding down both the LEFT button and UP button
@@ -143,35 +137,55 @@ void Arduboy::bootLCD() {
 // loop and allows it to be reprogrammed even if you have uploaded a very
 // broken sketch that interferes with the normal USB triggered auto-reboot
 // functionality of the device.
-void Arduboy::safeMode() {
+void Arduboy::safeMode()
+{
   display(); // too avoid random gibberish
   while (true) {
     asm volatile("nop \n");
   }
 }
 
+void Arduboy::LCDDataMode()
+{
+  *dcport |= dcpinmask;
+  *csport &= ~cspinmask;
+}
+
+void Arduboy::LCDCommandMode()
+{
+  *csport |= cspinmask; // why are we doing this twice?
+  *csport |= cspinmask;
+  *dcport &= ~dcpinmask;
+  *csport &= ~cspinmask;
+}
+
+
 /* Power Management */
 
-void Arduboy::idle() {
+void Arduboy::idle()
+{
   set_sleep_mode(SLEEP_MODE_IDLE);
   sleep_mode();
 }
 
-void Arduboy::saveMuchPower() {
+void Arduboy::saveMuchPower()
+{
   power_adc_disable();
   power_usart0_disable();
   power_twi_disable();
   // timer 0 is for millis()
   // timers 1 and 3 are for music and sounds
   power_timer2_disable();
-  //power_usart1_disable();
+  power_usart1_disable();
   // we need USB, for now (to allow triggered reboots to reprogram)
   // power_usb_disable()
 }
 
+
 /* Frame management */
 
-void Arduboy::setFrameRate(uint8_t rate) {
+void Arduboy::setFrameRate(uint8_t rate)
+{
   frameRate = rate;
   eachFrameMillis = 1000/rate;
 }
@@ -264,18 +278,6 @@ void Arduboy::clearDisplay()
   for (int a = 0; a < (HEIGHT*WIDTH)/8; a++) sBuffer[a] = 0x00;
 }
 
-/*
-// Compiler already optimizes well
-void Arduboy::drawPixel(int x, int y, uint8_t color) {
-  #ifdef PIXEL_SAFE_MODE
-  if(x & 0xFF00 || y & 0xFF00) return;
-  if(x & 0x0080 || y & 0x00C0) return;
-  #endif
-  unsigned char *p = &sBuffer[((y & 0xF8) << 4) + x];
-  if(color) *p |= (1 << (y & 7)); else *p = ~(1 << (y & 7));
-}
-*/
-
 void Arduboy::drawPixel(int x, int y, uint8_t color)
 {
   #ifdef PIXEL_SAFE_MODE
@@ -295,7 +297,6 @@ void Arduboy::drawPixel(int x, int y, uint8_t color)
     sBuffer[(row*WIDTH) + (uint8_t)x] &= ~ _BV((uint8_t)y % 8);
   }
 }
-
 
 uint8_t Arduboy::getPixel(uint8_t x, uint8_t y)
 {
@@ -436,10 +437,6 @@ void Arduboy::fillCircleHelper
   }
 }
 
-void x(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint8_t color) {
-
-}
-
 void Arduboy::drawLine
 (int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint8_t color)
 {
@@ -530,8 +527,9 @@ void Arduboy::fillRect
   }
 }
 
-void Arduboy::fillScreen(uint8_t color) {
-  for(word a = 0; a < (HEIGHT*WIDTH)/8; a++) sBuffer[a] = color ? 0xFF : 0x00;
+void Arduboy::fillScreen(uint8_t color)
+{
+  fillRect(0, 0, WIDTH, HEIGHT, color);
 }
 
 void Arduboy::drawRoundRect
@@ -880,7 +878,6 @@ void Arduboy::setTextWrap(boolean w)
   wrap = w;
 }
 
-#ifndef EXCLUDE_PRINT
 size_t Arduboy::write(uint8_t c)
 {
   if (c == '\n')
@@ -903,7 +900,6 @@ size_t Arduboy::write(uint8_t c)
     }
   }
 }
-#endif
 
 void Arduboy::display()
 {
@@ -953,18 +949,20 @@ boolean Arduboy::not_pressed(uint8_t buttons)
 }
 
 
-uint8_t Arduboy::getInput() {
+uint8_t Arduboy::getInput()
+{
   // using ports here is ~100 bytes smaller than digitalRead()
   #ifdef DEVKIT
   // down, left, up
-  uint8_t buttons = ((PINB) & B01110000);
+  uint8_t buttons = ((~PINB) & B01110000);
   // right button
-  buttons |= (((PINC) & B01000000) >> 4);
+  buttons = buttons | (((~PINC) & B01000000) >> 4);
   // A and B
-  buttons |= (((PINF) & B11000000) >> 6);
+  buttons = buttons | (((~PINF) & B11000000) >> 6);
   #endif
+
   // b0dlu0rab - see button defines in Arduboy.h
-  return buttons  ^ 0b11100111;
+  return buttons;
 }
 
 void Arduboy::swap(int16_t& a, int16_t& b) {
@@ -977,7 +975,7 @@ void Arduboy::swap(int16_t& a, int16_t& b) {
 uint8_t SimpleButtons::poll()
 {
   previousButtonState = currentButtonState;
-  return (currentButtonState = arduboy->getInput());
+  return currentButtonState = arduboy->getInput();
 }
 // returns true if a button has just been pressed
 // if the button has been held down for multiple frames this will return
@@ -1020,6 +1018,7 @@ void ArduboyAudio::save_on_off() {
 }
 
 void ArduboyAudio::setup() {
+  tune_playing = false;
   if (EEPROM.read(EEPROM_AUDIO_ON_OFF))
     on();
 }
@@ -1043,9 +1042,7 @@ void ArduboyTunes::initChannel(byte pin) {
   timer_num = pgm_read_byte(tune_pin_to_timer_PGM + _tune_num_chans);
   _tune_pins[_tune_num_chans] = pin;
   _tune_num_chans++;
-  
-  if(pin == PIN_SPEAKER_1) fastMode(PIN_SPEAKER_1, OUTPUT); else fastMode(PIN_SPEAKER_2, OUTPUT); 
-
+  pinMode(pin, OUTPUT);
   switch (timer_num) {
     case 1: // 16 bit timer
       TCCR1A = 0;
@@ -1135,7 +1132,8 @@ void ArduboyTunes::playScore(const byte *score) {
 
 
 
-bool ArduboyTunes::playing() {
+bool ArduboyTunes::playing()
+{
   return tune_playing;
 }
 
@@ -1202,7 +1200,7 @@ void ArduboyTunes::closeChannels(void) {
         TIMSK3 &= ~(1 << OCIE3A);
         break;
     }
-    if(_tune_pins[chan] == PIN_SPEAKER_1) fastWrite(PIN_SPEAKER_1, 0); else fastWrite(PIN_SPEAKER_2, 0); 
+    digitalWrite(_tune_pins[chan], 0);
   }
   _tune_num_chans = 0;
   tune_playing = false;
@@ -1261,7 +1259,7 @@ void ArduboyTunes::tone(unsigned int frequency, unsigned long duration) {
   bitWrite(TIMSK1, OCIE1A, 1);
 }
 
-LISR(TIMER1_COMPA) {  // TIMER 1
+ISR(TIMER1_COMPA_vect) {  // TIMER 1
   if (tonePlaying) {
     if (timer1_toggle_count != 0) {
       // toggle the pin
@@ -1278,35 +1276,8 @@ LISR(TIMER1_COMPA) {  // TIMER 1
     *_tunes_timer1_pin_port ^= _tunes_timer1_pin_mask;  // toggle the pin
   }
 }
-
-LISR(TIMER3_COMPA) {  // TIMER 3
+ISR(TIMER3_COMPA_vect) {  // TIMER 3
   // Timer 3 is the one assigned first, so we keep it running always
   // and use it to time score waits, whether or not it is playing a note.
   ArduboyTunes::soundOutput();
-}
-
-__attribute__((signal, used, naked, externally_visible))
-void TIMER1_COMPA_vect() {
-  asm (
-    "STS scratch, R0   \n" // Save R0
-    "LDS R0, fT1CA     \n" // Push function pointer to stack
-    "PUSH R0           \n"
-    "LDS R0, fT1CA + 1 \n"
-    "PUSH R0           \n"
-    "LDS R0, scratch   \n" // Restore R0
-    "RET               \n" // "Return" to function pointer
-  );
-}
-
-__attribute__((signal, used, naked, externally_visible))
-void TIMER3_COMPA_vect() {
-  asm (
-    "STS scratch, R0   \n" // Save R0
-    "LDS R0, fT3CA     \n" // Push function pointer to stack
-    "PUSH R0           \n"
-    "LDS R0, fT3CA + 1 \n"
-    "PUSH R0           \n"
-    "LDS R0, scratch   \n" // Restore R0
-    "RET               \n" // "Return" to function pointer
-  );
 }

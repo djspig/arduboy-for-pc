@@ -1,4 +1,4 @@
-#ifndef Arduboy_h
+ #ifndef Arduboy_h
 #define Arduboy_h
 
 #include <SPI.h>
@@ -9,16 +9,6 @@
 #include <Arduino.h>
 #include <EEPROM.h>
 #include <avr/pgmspace.h>
-
-/* FAST INLINE PIN ACCESS */
-#define digitalPinToPortReg(P) (((P) >= 0 && (P) <= 7) ? &PORTD : (((P) >= 8 && (P) <= 13) ? &PORTB : &PORTC))
-#define digitalPinToDDRReg(P)  (((P) >= 0 && (P) <= 7) ? &DDRD : (((P) >= 8 && (P) <= 13) ? &DDRB : &DDRC))
-#define digitalPinToPINReg(P)  (((P) >= 0 && (P) <= 7) ? &PIND : (((P) >= 8 && (P) <= 13) ? &PINB : &PINC))
-#define digitalPinToBit(P)     (((P) >= 0 && (P) <= 7) ? (P) : (((P) >= 8 && (P) <= 13) ? (P) - 8 : (P) - 14))
-#define fastMode(P, V) if(__builtin_constant_p(P) && __builtin_constant_p(V)) bitWrite(*digitalPinToDDRReg(P), digitalPinToBit(P), (V)); else pinMode((P), (V))
-#define fastWrite(P, V) if(__builtin_constant_p(P) && __builtin_constant_p(V)) bitWrite(*digitalPinToPortReg(P), digitalPinToBit(P), (V));  else digitalWrite((P), (V))
-#define fastRead(P) ((int)((__builtin_constant_p(P)) ? (bitRead(*digitalPinToPINReg(P), digitalPinToBit(P))) : digitalRead((P))))
-/* ====================== */
 
 #define DEVKIT
 
@@ -38,12 +28,11 @@
 
 // eeprom settings above are needed for audio
 
-#define PIXEL_SAFE_MODE // increases footprint
-#define SAFE_MODE       // increases footprint
-#define EXCLUDE_PRINT   // reduces footprint
+#define PIXEL_SAFE_MODE
+#define SAFE_MODE
 
-#define CS  6
-#define DC  4
+#define CS 6
+#define DC 4
 #define RST 12
 
 // compare Vcc to 1.1 bandgap
@@ -75,6 +64,8 @@
 #define WHITE 1
 #define BLACK 0
 
+#define COLUMN_ADDRESS_END (WIDTH - 1) & 0x7F
+#define PAGE_ADDRESS_END ((HEIGHT/8)-1) & 0x07
 
 class ArduboyAudio
 {
@@ -89,6 +80,7 @@ public:
 protected:
   bool audio_enabled = false;
 };
+
 
 class ArduboyTunes
 {
@@ -114,25 +106,20 @@ private:
 };
 
 
-#ifdef EXCLUDE_PRINT
-class Arduboy
-#else
 class Arduboy : public Print
-#endif
 {
 public:
   Arduboy();
   void LCDDataMode();
   void LCDCommandMode();
 
+  uint8_t *direct() { return sBuffer; }
   uint8_t getInput();
   boolean pressed(uint8_t buttons);
   boolean not_pressed(uint8_t buttons);
-  void startAudio();
   void start();
   void saveMuchPower();
   void idle();
-  unsigned char *direct() { return sBuffer; }
   void blank();
   void clearDisplay();
   void display();
@@ -165,9 +152,7 @@ public:
   unsigned char* getBuffer();
   uint8_t width();
   uint8_t height();
-#ifndef EXCLUDE_PRINT
   virtual size_t write(uint8_t);
-#endif
   void initRandomSeed();
   void swap(int16_t& a, int16_t& b);
 
@@ -195,8 +180,8 @@ private:
   uint8_t readCapacitivePin(int pinToMeasure);
   uint8_t readCapXtal(int pinToMeasure);
   uint16_t rawADC(byte adc_bits);
-  //volatile uint8_t *mosiport, *clkport, *csport, *dcport;
-  //uint8_t mosipinmask, clkpinmask, cspinmask, dcpinmask;
+  volatile uint8_t *mosiport, *clkport, *csport, *dcport;
+  uint8_t mosipinmask, clkpinmask, cspinmask, dcpinmask;
 
 // Adafruit stuff
 protected:
