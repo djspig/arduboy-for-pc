@@ -6,8 +6,6 @@
 #include <stdbool.h>
 #include <time.h>
 
-#include "sdl.h"
-
 /* EMULATION SHEITE */
 #define PROGMEM
 #define B00000000 0
@@ -27,6 +25,14 @@
 
 typedef uint8_t byte;
 typedef uint16_t word;
+typedef bool boolean;
+
+int max(int a, int b);
+int min(int a, int b);
+int abs(int a);
+extern char* ltoa( long value, char *string, int radix );
+
+#include "sdl.h"
 
 /* == WMATH ====================== */
 

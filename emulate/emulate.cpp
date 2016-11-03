@@ -21,6 +21,61 @@ long map(long x, long in_min, long in_max, long out_min, long out_max) {
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
+int max(int a, int b) {
+	return a > b ? a : b;
+}
+
+int min(int a, int b) {
+	return a < b ? a : b;
+}
+
+int abs(int a) {
+	return a < 0 ? -a : a;
+}
+
+extern char* ltoa( long value, char *string, int radix )
+{
+  char tmp[33];
+  char *tp = tmp;
+  long i;
+  unsigned long v;
+  int sign;
+  char *sp;
+  if ( string == NULL )
+  {
+    return 0 ;
+  }
+  if (radix > 36 || radix <= 1)
+  {
+    return 0 ;
+  }
+  sign = (radix == 10 && value < 0);
+  if (sign)
+  {
+    v = -value;
+  }
+  else
+  {
+    v = (unsigned long)value;
+  }
+  while (v || tp == tmp)
+  {
+    i = v % radix;
+    v = v / radix;
+    if (i < 10)
+      *tp++ = i+'0';
+    else
+      *tp++ = i + 'a' - 10;
+  }
+  sp = string;
+  if (sign)
+    *sp++ = '-';
+  while (tp > tmp)
+    *sp++ = *--tp;
+  *sp = 0;
+  return string;
+}
+
 unsigned int makeWord(unsigned int w) { return w; }
 unsigned int makeWord(unsigned char h, unsigned char l) { return (h << 8) | l; }
 
